@@ -19,8 +19,9 @@ interface Rule {
 	separated?: boolean;
 	// Bare form: "term" removes the term and a trailing year or version word,
 	// "rest" removes everything up to the next dash or bracket,
-	// "end" removes the term (and following filler words) at the end of the name
-	bare?: "term" | "rest" | "end";
+	// "end" removes the term (and following filler words) at the end of the name,
+	// "word" removes the term wherever it is a separate word
+	bare?: "term" | "rest" | "end" | "word";
 	// Leave brackets and segments alone that contain this regex source
 	exclude?: string;
 	// Only applied to album names, not to track titles
@@ -87,6 +88,20 @@ const RULES: Rule[] = [
 		albumOnly: true,
 	},
 
+	// Explicit markers: (Explicit), [explicit version], - Explicit Content, ...
+	{
+		term: String.raw`explicit(?:\s+(?:version|content|lyrics))?`,
+		separated: true,
+		bare: "end",
+	},
+
+	// Medley is treated like any other addition: "Song (Medley)", "Song Medley"
+	{
+		term: "medley",
+		separated: true,
+		bare: "word",
+	},
+
 	// Album version: (Album Version), [LP Version], - Album Edit, (Original Album Version)
 	{
 		term: String.raw`(?:original\s+)?(?:album|lp)\s+(?:version|mix|edit)`,
@@ -138,6 +153,8 @@ function buildRegexes(rule: Rule) {
 				"giu"
 			)
 		);
+	} else if (rule.bare === "word") {
+		regexes.push(new RegExp(String.raw`\s*${t}(?![${L}${N}])`, "giu"));
 	} else if (rule.bare === "end") {
 		regexes.push(
 			new RegExp(
@@ -196,6 +213,11 @@ function clean(name: string, isAlbum: boolean) {
 		}
 	}
 
+	return tidy(name, result);
+}
+
+// Cleans up what is left after parts were removed from a name
+function tidy(name: string, result: string) {
 	// Leave names without any unwanted term completely untouched
 	if (result === name) return name;
 
@@ -210,4 +232,65 @@ function clean(name: string, isAlbum: boolean) {
 
 	// Never return an empty name
 	return result === "" ? name : result;
+}
+
+// Mix suffixes: "(Club Mix)", "(David Guetta Remix)", "(Remixed by X)", "- Radio
+// Edit", "(Street Version)". They are only removed when the title stays unique
+// in its album, see getStrippableTitles.
+const MIX_KEYWORDS = String.raw`(?:re)?mix(?:ed|es)?|rmx|edit|version|dub|rework(?:ed)?|remodel(?:ed)?|refix|reconstruction|bootleg|mashup|vip|extended`;
+// Words that describe the kind of track, these suffixes are never removed
+const MIX_PROTECTED = String.raw`live|acoustic|instrumental|demo|unplugged|a\s?cappella|karaoke|intro|outro|skit|interlude|session|piano|orchestral|stripped`;
+
+const mixKeyword = String.raw`${WORD_START}(?:${MIX_KEYWORDS})(?![${L}${N}])`;
+const notProtected = (inside: string) =>
+	String.raw`(?!${inside}*?${WORD_START}(?:${MIX_PROTECTED})(?![${L}${N}]))`;
+
+const MIX_REGEXES = [
+	new RegExp(
+		String.raw`\s*${OPEN}${notProtected(INSIDE)}${INSIDE}*?${mixKeyword}${INSIDE}*?${CLOSE}`,
+		"giu"
+	),
+	new RegExp(
+		String.raw`(?:\s+[-–—|]\s+|\s*:\s+)${notProtected(SEGMENT)}${SEGMENT}*?${mixKeyword}${SEGMENT}*`,
+		"giu"
+	),
+];
+
+export function stripMixSuffix(name: string) {
+	if (!name) return name;
+
+	let result = name;
+	let previous: string;
+	do {
+		previous = result;
+		result = result.replace(MIX_REGEXES[0], "");
+	} while (result !== previous);
+	result = result.replace(MIX_REGEXES[1], "");
+
+	return tidy(name, result);
+}
+
+// For all titles of one album: which titles may lose their mix suffix? Only
+// those that are still unique in the album afterwards, otherwise the versions
+// of a song could not be told apart anymore.
+export function getStrippableTitles(titles: string[]) {
+	const cleaned = titles.map((title) => cleanName(title));
+	const stripped = cleaned.map((title) => stripMixSuffix(title));
+
+	const counts = new Map<string, number>();
+	for (const title of stripped) {
+		const key = title.trim().toLowerCase();
+		counts.set(key, (counts.get(key) ?? 0) + 1);
+	}
+
+	return cleaned.map(
+		(title, i) =>
+			stripped[i] !== title &&
+			counts.get(stripped[i].trim().toLowerCase()) === 1
+	);
+}
+
+// Reprise tracks are not downloaded at all
+export function isRepriseTitle(title: string) {
+	return /(?<![\p{L}\p{N}])(?:reprise|reprice)(?![\p{L}\p{N}])/iu.test(title);
 }

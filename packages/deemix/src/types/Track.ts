@@ -16,7 +16,11 @@ import {
 	removeDuplicateArtists,
 	removeFeatures,
 } from "../utils/index.js";
-import { cleanAlbumName, cleanName } from "../utils/cleanNames.js";
+import {
+	cleanAlbumName,
+	cleanName,
+	stripMixSuffix,
+} from "../utils/cleanNames.js";
 import { Album } from "./Album.js";
 import { Artist } from "./Artist.js";
 import { CustomDate } from "./CustomDate.js";
@@ -366,7 +370,7 @@ class Track {
 		}
 	}
 
-	applySettings(settings: Settings) {
+	applySettings(settings: Settings, stripMix = false) {
 		if (this.album.date) this.date = this.album.date;
 		this.dateString = this.date.format(settings.dateFormat);
 		this.album.dateString = this.album.date.format(settings.dateFormat);
@@ -416,6 +420,16 @@ class Track {
 		// Remove unwanted terms (like "Remaster") from track and album title
 		this.title = cleanName(this.title);
 		this.album.title = cleanAlbumName(this.album.title);
+
+		// Mix suffixes (Club Mix, Remixed by X, ...) only if the title is
+		// unique in its album, decided by the downloader
+		if (stripMix) this.title = stripMixSuffix(this.title);
+
+		// Albums are numbered continuously over all discs, skipped tracks
+		// included, so the tag matches the number in the file name
+		if (this.position !== null && !this.playlist) {
+			this.trackNumber = this.position;
+		}
 
 		// Change title and artist casing if needed
 		if (settings.titleCasing !== "nothing") {

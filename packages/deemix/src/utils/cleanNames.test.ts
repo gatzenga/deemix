@@ -1,4 +1,10 @@
-import { cleanAlbumName, cleanName } from "./cleanNames.js";
+import {
+	cleanAlbumName,
+	cleanName,
+	getStrippableTitles,
+	isRepriseTitle,
+	stripMixSuffix,
+} from "./cleanNames.js";
 
 test("removes remaster in brackets", () => {
 	expect(cleanName("Song (2014 Remaster)")).toBe("Song");
@@ -215,4 +221,111 @@ test("keeps words that describe the kind of track", () => {
 	}
 	expect(cleanName("Song (Live) (Bonus Track)")).toBe("Song (Live)");
 	expect(cleanName("Song (Intro) (Bonus Track)")).toBe("Song (Intro)");
+});
+
+test("removes explicit markers in every form", () => {
+	for (const form of [
+		"Song (Explicit)",
+		"Song (explicit)",
+		"Song [Explicit]",
+		"Song {EXPLICIT}",
+		"Song (Explicit Version)",
+		"Song [explicit version]",
+		"Song (Explicit Content)",
+		"Song (Explicit Lyrics)",
+		"Song - Explicit",
+		"Song - Explicit Version",
+		"Song Explicit",
+		"Song Explicit Version",
+	]) {
+		expect(cleanName(form), form).toBe("Song");
+	}
+	expect(cleanName("Song (Live) [Explicit]")).toBe("Song (Live)");
+});
+
+test("removes medley like any other addition", () => {
+	for (const form of [
+		"Song (Medley)",
+		"Song [Medley]",
+		"Song - Medley",
+		"Song Medley",
+		"Song (Live Medley)",
+	]) {
+		expect(cleanName(form), form).not.toMatch(/medley/i);
+	}
+	expect(cleanName("Song (Medley)")).toBe("Song");
+	expect(cleanName("Disney Medley (Live)")).toBe("Disney (Live)");
+	// The main title itself is never cut
+	expect(cleanName("Song A / Song B (Medley)")).toBe("Song A / Song B");
+});
+
+test("strips mix suffixes with artist names and versions", () => {
+	for (const form of [
+		"Song (Club Mix)",
+		"Song [Club Mix]",
+		"Song (Remix)",
+		"Song (David Guetta Mix)",
+		"Song (Remixed by David Guetta)",
+		"Song (David Guetta Remix)",
+		"Song (Tiësto's Extended Remix)",
+		"Song (Radio Edit)",
+		"Song (Street Version)",
+		"Song (Single Version)",
+		"Song (Original Mix)",
+		"Song (Dub Mix)",
+		"Song - Radio Edit",
+		"Song - David Guetta Remix",
+		"Song - Extended Version",
+	]) {
+		expect(stripMixSuffix(form), form).toBe("Song");
+	}
+});
+
+test("keeps suffixes that describe the kind of track", () => {
+	for (const name of [
+		"Song (Live Version)",
+		"Song (Live)",
+		"Song (Acoustic Version)",
+		"Song (Instrumental Version)",
+		"Song (Piano Version)",
+		"Song (Demo Version)",
+		"Mix It Up",
+		"Version 2",
+		"Song",
+	]) {
+		expect(stripMixSuffix(name), name).toBe(name);
+	}
+});
+
+test("mix suffixes only go when the title stays unique in the album", () => {
+	expect(getStrippableTitles(["Song (Club Mix)", "Other"])).toEqual([
+		true,
+		false,
+	]);
+	// The original is in the album as well
+	expect(getStrippableTitles(["Song", "Song (Club Mix)"])).toEqual([
+		false,
+		false,
+	]);
+	// Two versions would end up with the same name
+	expect(getStrippableTitles(["Song (Club Mix)", "Song (Radio Edit)"])).toEqual(
+		[false, false]
+	);
+	// Explicit is removed first, so the plain title already exists
+	expect(getStrippableTitles(["Song (Club Mix)", "Song (Explicit)"])).toEqual([
+		false,
+		false,
+	]);
+	expect(
+		getStrippableTitles(["A (Street Version)", "B (Club Mix)", "C"])
+	).toEqual([true, true, false]);
+});
+
+test("recognizes reprise tracks", () => {
+	expect(isRepriseTitle("Love Theme (Reprise)")).toBe(true);
+	expect(isRepriseTitle("Reprise")).toBe(true);
+	expect(isRepriseTitle("Song [reprise]")).toBe(true);
+	expect(isRepriseTitle("Song (Reprice)")).toBe(true);
+	expect(isRepriseTitle("Comprise")).toBe(false);
+	expect(isRepriseTitle("Song")).toBe(false);
 });

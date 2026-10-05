@@ -22,6 +22,7 @@ import { StaticPicture } from "./types/Picture.js";
 import { Playlist } from "./types/Playlist.js";
 import type { Settings } from "./types/Settings.js";
 import Track, { formatsName } from "./types/Track.js";
+import { getStrippableTitles } from "./utils/cleanNames.js";
 import { shellEscape } from "./utils/core.js";
 import { downloadImage } from "./utils/downloadImage.js";
 import { checkShouldDownload, tagTrack } from "./utils/downloadUtils.js";
@@ -58,6 +59,8 @@ export class Downloader {
 	playlistCovername?: string;
 	playlistURLs: { url: string; ext: string }[];
 	coverQueue: Record<string, string>;
+	// Tracks of an album that may lose their mix suffix (title stays unique)
+	strippableTracks: Set<string>;
 
 	constructor(
 		dz: Deezer,
@@ -74,6 +77,18 @@ export class Downloader {
 		this.playlistURLs = [];
 
 		this.coverQueue = {};
+
+		this.strippableTracks = new Set();
+		if (
+			downloadObject instanceof Collection &&
+			downloadObject.type === "album"
+		) {
+			const tracks: APITrack[] = downloadObject.collection.tracks ?? [];
+			const strippable = getStrippableTitles(tracks.map((t) => t.title));
+			tracks.forEach((t, i) => {
+				if (strippable[i]) this.strippableTracks.add(String(t.id));
+			});
+		}
 	}
 
 	log(data, state) {
@@ -234,7 +249,10 @@ export class Downloader {
 		track.bitrate = selectedFormat;
 		track.album.bitrate = selectedFormat;
 
-		track.applySettings(this.settings);
+		track.applySettings(
+			this.settings,
+			this.strippableTracks.has(String(trackAPI.id))
+		);
 
 		const { filename, filepath, artistPath, coverPath, extrasPath } =
 			generatePath(track, this.downloadObject.type, this.settings);

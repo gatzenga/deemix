@@ -7,6 +7,7 @@ import {
 	type GWTrack,
 } from "deezer-sdk";
 import { GenerationError, InvalidID } from "../errors.js";
+import { isRepriseTitle } from "../utils/cleanNames.js";
 import { Collection } from "./Collection.js";
 import { generateTrackItem } from "./generateTrackItem.js";
 
@@ -83,7 +84,15 @@ export async function generateAlbumItem(
 		);
 	}
 
-	const tracksArray = (await dz.gw.get_album_tracks(id)).sort(
+	const allTracks = await dz.gw.get_album_tracks(id);
+	const withoutReprises = allTracks.filter(
+		(track: GWTrack) =>
+			!isRepriseTitle(`${track.SNG_TITLE} ${track.VERSION ?? ""}`)
+	);
+	// Never drop every track of an album
+	const tracksArray = (
+		withoutReprises.length ? withoutReprises : allTracks
+	).sort(
 		(a: GWTrack, b: GWTrack) =>
 			Number(a.DISK_NUMBER) - Number(b.DISK_NUMBER) ||
 			Number(a.TRACK_NUMBER) - Number(b.TRACK_NUMBER)
