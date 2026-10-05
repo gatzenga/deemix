@@ -180,10 +180,7 @@ const en = {
 		},
 	},
 	sidebar: {
-		search: "search",
 		linkAnalyzer: "link analyzer",
-		settings: "settings",
-		logs: "logs",
 	},
 	tracklist: {
 		downloadSelection: "Download selection",

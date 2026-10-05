@@ -5,14 +5,12 @@ interface AppInfoState {
 	deemixVersion?: string;
 	guiVersion?: string;
 	previewVolume: number;
-	isMobileSidebarOpen: boolean;
 	isMobileDownloadsOpen: boolean;
 }
 
 export const useAppInfoStore = defineStore("appInfo", {
 	state: (): AppInfoState => ({
 		previewVolume: 80,
-		isMobileSidebarOpen: false,
 		isMobileDownloadsOpen: false,
 	}),
 	actions: {
@@ -20,12 +18,6 @@ export const useAppInfoStore = defineStore("appInfo", {
 			this.webuiVersion = payload.webuiVersion;
 			this.deemixVersion = payload.deemixVersion;
 			this.guiVersion = payload.guiVersion;
-		},
-		toggleMobileSidebar() {
-			this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
-		},
-		closeMobileSidebar() {
-			this.isMobileSidebarOpen = false;
 		},
 		toggleMobileDownloads() {
 			this.isMobileDownloadsOpen = !this.isMobileDownloadsOpen;

@@ -118,7 +118,7 @@ export const toast = function (
 				}
 			},
 			offset: {
-				x: localStorage.getItem("slimSidebar") === "true" ? "3rem" : "14rem",
+				x: "4.5rem",
 				y: undefined,
 			},
 		});
