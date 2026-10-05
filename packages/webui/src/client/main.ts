@@ -36,7 +36,6 @@ app.mount("#app");
 
 async function startApp() {
 	const connectResponse = await fetchData("connect");
-	const spotifyStatus = connectResponse.spotifyEnabled ? "enabled" : "disabled";
 
 	if (connectResponse.deezerAvailable === "no-network") {
 		document.getElementById("deezer_not_reachable")?.classList.remove("hide");
@@ -46,10 +45,8 @@ async function startApp() {
 	}
 
 	const appInfoStore = useAppInfoStore(pinia);
-	const loginStore = useLoginStore(pinia);
 
 	appInfoStore.setAppInfo(connectResponse.update);
-	loginStore.setSpotifyStatus(spotifyStatus);
 
 	let arl = localStorage.getItem("arl");
 
@@ -84,20 +81,6 @@ async function startApp() {
 		}
 	} else {
 		loggedIn({ status: 3, user: connectResponse.currentUser, arl });
-	}
-
-	if (connectResponse.checkForUpdates) {
-		const updates = await fetchData("checkForUpdates");
-		appInfoStore.setUpdateInfo(updates);
-
-		if (updates.updateAvailable) {
-			toast(
-				i18n.global.t("toasts.updateAvailable"),
-				"browser_updated",
-				true,
-				"updates-toast"
-			);
-		}
 	}
 }
 
@@ -241,24 +224,6 @@ socket.on("finishAddingArtist", function (data: { name: string; id: string }) {
 		"done",
 		true,
 		"artist_" + data.id
-	);
-});
-
-socket.on("startConvertingSpotifyPlaylist", function (id: string) {
-	toast(
-		i18n.global.t("toasts.startConvertingSpotifyPlaylist"),
-		"loading",
-		false,
-		"spotifyplaylist_" + id
-	);
-});
-
-socket.on("finishConvertingSpotifyPlaylist", function (id: string) {
-	toast(
-		i18n.global.t("toasts.finishConvertingSpotifyPlaylist"),
-		"done",
-		true,
-		"spotifyplaylist_" + id
 	);
 });
 

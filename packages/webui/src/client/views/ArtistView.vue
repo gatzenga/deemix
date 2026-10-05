@@ -18,7 +18,7 @@ const head = ref([
 		sortKey: "releaseTitle",
 	},
 	{
-		title: t("globals.listTabs.releaseDate"),
+		title: t("globals.listTabs.year"),
 		sortKey: "releaseDate",
 	},
 	{
@@ -49,9 +49,6 @@ const state: State = reactive<State>({
 	currentRelease: computed(() => state.artistReleases[state.currentTab]),
 });
 
-const downloadLink = computed(
-	() => `https://www.deezer.com/artist/${unref(artistID)}`
-);
 const headerStyle = computed(() => ({
 	backgroundImage: `linear-gradient(to bottom, transparent 0%, var(--main-background) 100%), url(${state.artistPicture})`,
 }));
@@ -103,18 +100,6 @@ const sortedData = computed(() => {
 	<div class="fixed-footer image-header relative">
 		<header class="flex items-center" :style="headerStyle">
 			<h1 class="m-0">{{ state.artistName }}</h1>
-
-			<div
-				class="bg-primary text-grayscale-870 ml-auto grid h-16 w-16 cursor-pointer place-items-center rounded-full"
-				aria-label="download"
-				role="button"
-				:data-cm-link="downloadLink"
-				@click.stop="sendAddToQueue(downloadLink)"
-			>
-				<i class="material-icons text-4xl" :title="t('globals.download_hint')"
-					>get_app</i
-				>
-			</div>
 		</header>
 
 		<BaseTabs>
@@ -187,16 +172,10 @@ const sortedData = computed(() => {
 										fiber_new
 									</i>
 								</span>
-								<span
-									v-show="state.currentTab === 'all'"
-									class="uppercase-first-letter block text-xs opacity-50"
-								>
-									{{ t(`globals.listTabs.${release.releaseType}`) }}
-								</span>
 							</div>
 						</td>
 					</router-link>
-					<td class="w-32 text-center xl:w-40">{{ release.releaseDate }}</td>
+					<td class="w-32 text-center xl:w-40">{{ release.releaseYear }}</td>
 					<td class="w-20 text-center xl:w-32">
 						{{ release.releaseTracksNumber }}
 					</td>
@@ -214,31 +193,5 @@ const sortedData = computed(() => {
 				</tr>
 			</tbody>
 		</table>
-		<footer class="bg-background-main">
-			<div style="flex-grow: 1">
-				<button
-					:data-link="downloadLink + '/discography'"
-					class="btn btn-flat"
-					@click.stop="sendAddToQueue(downloadLink)"
-				>
-					{{
-						`${t("globals.download", {
-							thing: t("globals.listTabs.discography"),
-						})}`
-					}}
-				</button>
-			</div>
-			<button
-				:data-link="downloadLink + '/' + state.currentTab"
-				class="btn btn-primary flex items-center"
-				@click.stop="sendAddToQueue(downloadLink + '/' + state.currentTab)"
-			>
-				{{
-					`${t("globals.download", {
-						thing: t(`globals.listTabs.${state.currentTab}`, 2),
-					})}`
-				}}<i class="material-icons ml-2">file_download</i>
-			</button>
-		</footer>
 	</div>
 </template>

@@ -1,8 +1,7 @@
 {
 	"name": "deemix",
 	"private": true,
-	"description": "A hybrid monorepo that wraps deemix-webui and lets you use the deemix-js library",
-	"repository": "https://github.com/bambanah/deemix.git",
+	"description": "Deezer album downloader with a Vue web interface, packaged as a macOS Electron app",
 	"author": "Bambanah",
 	"license": "GPL-3.0-only",
 	"engines": {
@@ -17,26 +16,18 @@
 		"test": "turbo run test",
 		"package": "turbo run package",
 		"make": "turbo run make",
-		"compile:cli": "turbo run deemix-cli#compile",
 		"ci": "turbo run lint type-check build test",
-		"clean": "rimraf .turbo node_modules --glob **/dist **/out **/node_modules **/.turbo **/tsconfig.tsbuildinfo",
-		"prepare": "husky"
+		"clean": "rimraf .turbo node_modules --glob **/dist **/out **/node_modules **/.turbo **/tsconfig.tsbuildinfo"
 	},
 	"devDependencies": {
-		"@changesets/cli": "^2.29.5",
-		"@commitlint/cli": "^19.8.1",
-		"@commitlint/config-conventional": "^19.8.1",
 		"@eslint/js": "^9.33.0",
 		"@total-typescript/tsconfig": "^1.0.4",
-		"@types/eslint-config-prettier": "^6.11.3",
 		"@types/node": "^24.2.1",
 		"@typescript-eslint/parser": "~8.39.1",
-		"esbuild": "^0.25.9",
 		"eslint": "^9.33.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-vue": "^10.4.0",
 		"globals": "^16.3.0",
-		"husky": "^9.1.7",
 		"npm-run-all2": "^8.0.4",
 		"prettier": "^3.6.2",
 		"prettier-plugin-tailwindcss": "^0.6.14",

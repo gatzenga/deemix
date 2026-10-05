@@ -24,14 +24,10 @@ export function isValidURL(text: string): boolean {
 	if (lowerCaseText.startsWith("http")) {
 		if (
 			lowerCaseText.includes("deezer.com") ||
-			lowerCaseText.includes("deezer.page.link") ||
-			lowerCaseText.includes("open.spotify.com") ||
-			lowerCaseText.includes("link.tospotify.com")
+			lowerCaseText.includes("deezer.page.link")
 		) {
 			return true;
 		}
-	} else if (lowerCaseText.startsWith("spotify:")) {
-		return true;
 	}
 	return false;
 }

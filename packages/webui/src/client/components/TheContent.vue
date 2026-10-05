@@ -42,13 +42,9 @@ const performScrolledSearch = ref(false);
 const content = ref<HTMLElement | null>(null);
 
 const showBackButton = computed(() => {
-	return [
-		"Tracklist",
-		"Artist",
-		"Album",
-		"Playlist",
-		"Spotify Playlist",
-	].includes(String(route.name));
+	return ["Tracklist", "Artist", "Album", "Playlist"].includes(
+		String(route.name)
+	);
 });
 
 const handleContentScroll = debounce(async function () {

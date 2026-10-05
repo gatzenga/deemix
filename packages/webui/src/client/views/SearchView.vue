@@ -3,16 +3,9 @@ import BaseLoadingPlaceholder from "@/components/globals/BaseLoadingPlaceholder.
 import BaseTab from "@/components/globals/BaseTab.vue";
 import BaseTabs from "@/components/globals/BaseTabs.vue";
 import ResultsAlbums from "@/components/search/ResultsAlbums.vue";
-import ResultsAll from "@/components/search/ResultsAll.vue";
 import ResultsArtists from "@/components/search/ResultsArtists.vue";
-import ResultsPlaylists from "@/components/search/ResultsPlaylists.vue";
 import ResultsTracks from "@/components/search/ResultsTracks.vue";
-import {
-	formatAlbums,
-	formatArtist,
-	formatPlaylist,
-	formatSingleTrack,
-} from "@/data/search";
+import { formatAlbums, formatArtist, formatSingleTrack } from "@/data/search";
 import { standardizeData } from "@/data/standardize";
 import { useMainSearch } from "@/use/main-search";
 import { useSearch } from "@/use/search";
@@ -60,33 +53,17 @@ const state = reactive<State>({
 	},
 	results: {
 		query: "",
-		allTab: {
-			ORDER: [],
-			TOP_RESULT: [],
-			ALBUM: {
-				hasLoaded: false,
-			},
-			ARTIST: {
-				hasLoaded: false,
-			},
-			TRACK: {
-				hasLoaded: false,
-			},
-			PLAYLIST: {
-				hasLoaded: false,
-			},
-		},
+		artistTab: { ...resetObj },
 		trackTab: { ...resetObj },
 		albumTab: { ...resetObj },
-		artistTab: { ...resetObj },
-		playlistTab: { ...resetObj },
 	},
 	tabs: [
 		{
-			name: t("globals.listTabs.all"),
-			searchType: "all",
-			component: markRaw(ResultsAll),
-			viewInfo: "allTab",
+			name: t("globals.listTabs.artist", 2),
+			searchType: "artist",
+			component: markRaw(ResultsArtists),
+			viewInfo: "artistTab",
+			formatFunc: formatArtist,
 		},
 		{
 			name: t("globals.listTabs.track", 2),
@@ -101,20 +78,6 @@ const state = reactive<State>({
 			component: markRaw(ResultsAlbums),
 			viewInfo: "albumTab",
 			formatFunc: formatAlbums,
-		},
-		{
-			name: t("globals.listTabs.artist", 2),
-			searchType: "artist",
-			component: markRaw(ResultsArtists),
-			viewInfo: "artistTab",
-			formatFunc: formatArtist,
-		},
-		{
-			name: t("globals.listTabs.playlist", 2),
-			searchType: "playlist",
-			component: markRaw(ResultsPlaylists),
-			viewInfo: "playlistTab",
-			formatFunc: formatPlaylist,
 		},
 	],
 });
@@ -168,18 +131,15 @@ function handleMainSearch(newValue) {
 
 	state.results.query = newValue.QUERY;
 
-	state.results.allTab = newValue;
-	state.results.allTab.TRACK.hasLoaded = true;
-	state.results.allTab.ALBUM.hasLoaded = true;
-	state.results.allTab.ARTIST.hasLoaded = true;
-	state.results.allTab.PLAYLIST.hasLoaded = true;
+	newValue.ARTIST.hasLoaded = true;
+	newValue.TRACK.hasLoaded = true;
+	newValue.ALBUM.hasLoaded = true;
 
+	state.results.artistTab = newValue.ARTIST;
 	state.results.trackTab = newValue.TRACK;
 	state.results.albumTab = newValue.ALBUM;
-	state.results.artistTab = newValue.ARTIST;
-	state.results.playlistTab = newValue.PLAYLIST;
 
-	if (lastTab.value && lastTab.value.searchType !== "all") {
+	if (lastTab.value) {
 		state.currentTab = lastTab.value;
 
 		performSearch({
@@ -187,7 +147,7 @@ function handleMainSearch(newValue) {
 			type: state.currentTab.searchType,
 		});
 	} else {
-		state.currentTab = state.tabs.find((tab) => tab.searchType === "all");
+		state.currentTab = state.tabs[0];
 	}
 }
 
@@ -195,10 +155,6 @@ function addToQueue(e) {
 	sendAddToQueue(e.currentTarget.dataset.link);
 }
 function getViewInfo() {
-	if (state.currentTab.searchType === "all") {
-		return state.results.allTab;
-	}
-
 	return standardizeData(
 		state.results[state.currentTab.viewInfo],
 		state.currentTab.formatFunc
@@ -221,8 +177,6 @@ function changeSearchTab(tabName) {
 	lastTab.value = newTab;
 }
 function scrolledSearch() {
-	if (state.currentTab.searchType === "all") return;
-
 	const currentTabKey = `${state.currentTab.searchType}Tab`;
 	const needToPerformScrolledSearch =
 		state.results[currentTabKey].next < state.results[currentTabKey].total;
@@ -236,7 +190,7 @@ function scrolledSearch() {
 	}
 }
 function isTabLoaded(tab: Tab) {
-	return loadedTabs.value.includes(tab.searchType) || tab.searchType === "all";
+	return loadedTabs.value.includes(tab.searchType);
 }
 
 // Main search watcher
@@ -286,7 +240,7 @@ watch(state.currentTab, (newTab) => {
 	});
 });
 
-state.currentTab = state.tabs.find((tab) => tab.searchType === "all");
+state.currentTab = state.tabs[0];
 </script>
 
 <template>
@@ -317,7 +271,6 @@ state.currentTab = state.tabs.find((tab) => tab.searchType === "all");
 					want-headers
 					:items-to-show="Infinity"
 					@add-to-queue="addToQueue"
-					@change-search-tab="changeSearchTab"
 				></component>
 			</keep-alive>
 		</div>

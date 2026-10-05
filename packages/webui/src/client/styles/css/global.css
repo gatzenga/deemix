@@ -22,17 +22,6 @@
 	--secondary-color: hsl(46, 100%, 57%); /* will remove variable */
 }
 
-:root[data-theme="light"] {
-	--main-background: theme("colors.white");
-	--secondary-background: theme("colors.grayscale.930");
-	--foreground: theme("colors.grayscale.200");
-	--panels-background: hsl(216, 4%, 78%);
-
-	--table-bg: theme("colors.white");
-	--table-zebra: theme("colors.grayscale.900");
-	--table-highlight: theme("colors.grayscale.840");
-}
-
 :root[data-theme="dark"] {
 	--main-background: hsl(240, 10%, 8%);
 	--secondary-background: hsl(240, 12%, 16%); /* e.g. search bar bg */
@@ -48,17 +37,6 @@
 		10%,
 		22%
 	); /* e.g. hover bg color on table selection */
-}
-
-:root[data-theme="purple"] {
-	--main-background: hsl(261, 74%, 6%);
-	--secondary-background: hsl(257, 61%, 10%);
-	--foreground: theme("colors.grayscale.930");
-	--panels-background: hsl(257, 70%, 9%);
-
-	--table-bg: hsl(261, 74%, 6%);
-	--table-zebra: hsl(257, 61%, 10%);
-	--table-highlight: hsl(257, 66%, 27%);
 }
 
 @layer base {

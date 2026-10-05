@@ -1,7 +1,7 @@
 import { TrackFormats } from "deezer-sdk";
 import { getMusicFolder, getConfigFolder } from "./utils/localpaths.js";
 import fs from "fs";
-import { type Settings } from "./types/Settings.js";
+import { type Settings, type Tags } from "./types/Settings.js";
 
 // Should the lib overwrite files?
 export const OverwriteOption = {
@@ -21,87 +21,70 @@ export const FeaturesOption = {
 	MOVE_TITLE: "2", // Move to track title
 };
 
+// Fixed artwork settings: the artist image is always saved, artwork is
+// requested at the largest size Deezer officially serves
+export const ARTWORK = {
+	embeddedSize: 1200,
+	embeddedPNG: false,
+	localSize: 1200,
+	localFormat: "jpg",
+	jpegImageQuality: 90,
+	saveCover: false,
+	saveArtist: true,
+	coverTemplate: "cover",
+	artistTemplate: "artist",
+};
+
+// Fixed download behaviour: always applied, whatever the config file says
+const FIXED_SETTINGS = {
+	queueConcurrency: 3,
+	maxBitrate: TrackFormats.MP3_320,
+	overwriteFile: OverwriteOption.DONT_OVERWRITE,
+	fallbackBitrate: false,
+	fallbackSearch: false,
+	fallbackISRC: false,
+	feelingLucky: false,
+	logErrors: false,
+	logSearched: false,
+	syncedLyrics: false,
+	createM3U8File: false,
+	clearQueueOnExit: false,
+	albumVariousArtists: true,
+	removeDuplicateArtists: true,
+	dateFormat: "D-M-Y",
+	featuredToTitle: FeaturesOption.REMOVE_TITLE_ALBUM,
+	titleCasing: "nothing",
+	artistCasing: "nothing",
+	executeCommand: "",
+} satisfies Partial<Settings>;
+
+// Fixed tag behaviour: one artist per track (the main artist) and a single
+// main album artist, "Various Artists" is kept for compilations
+const FIXED_TAGS = {
+	multiArtistSeparator: "nothing",
+	singleAlbumArtist: true,
+	saveID3v1: true,
+} satisfies Partial<Tags>;
+
 export const DEFAULT_SETTINGS: Settings = {
 	downloadLocation: getMusicFolder(),
-	tracknameTemplate: "%artist% - %title%",
-	albumTracknameTemplate: "%tracknumber% - %title%",
-	playlistTracknameTemplate: "%artist% - %title%",
-	createPlaylistFolder: true,
-	playlistNameTemplate: "%playlist%",
-	createArtistFolder: false,
-	artistNameTemplate: "%artist%",
-	createAlbumFolder: true,
-	albumNameTemplate: "%artist% - %album%",
-	createCDFolder: true,
-	createStructurePlaylist: false,
-	createSingleFolder: false,
 	padTracks: true,
 	padSingleDigit: true,
 	paddingSize: 0,
 	illegalCharacterReplacer: "_",
-	queueConcurrency: 10,
-	maxBitrate: TrackFormats.MP3_128,
-	feelingLucky: false,
-	fallbackBitrate: false,
-	fallbackSearch: false,
-	fallbackISRC: false,
-	logErrors: true,
-	logSearched: false,
-	overwriteFile: OverwriteOption.DONT_OVERWRITE,
-	createM3U8File: false,
+	...FIXED_SETTINGS,
 	playlistFilenameTemplate: "playlist",
-	syncedLyrics: false,
-	embeddedArtworkSize: 800,
-	embeddedArtworkPNG: false,
-	localArtworkSize: 1200,
-	localArtworkFormat: "jpg",
-	saveArtwork: true,
-	coverImageTemplate: "cover",
-	saveArtworkArtist: false,
-	artistImageTemplate: "folder",
-	jpegImageQuality: 90,
-	dateFormat: "Y-M-D",
-	albumVariousArtists: true,
-	removeAlbumVersion: false,
-	removeDuplicateArtists: true,
-	featuredToTitle: FeaturesOption.NO_CHANGE,
-	titleCasing: "nothing",
-	artistCasing: "nothing",
-	executeCommand: "",
 	tags: {
 		title: true,
 		artist: true,
-		artists: true,
 		album: true,
 		cover: true,
 		trackNumber: true,
-		trackTotal: false,
-		discNumber: true,
-		discTotal: false,
 		albumArtist: true,
-		genre: true,
 		year: true,
-		date: true,
-		explicit: false,
-		isrc: true,
-		length: true,
-		barcode: true,
 		bpm: true,
-		replayGain: false,
-		label: true,
-		lyrics: false,
-		syncedLyrics: false,
-		copyright: false,
-		composer: false,
-		involvedPeople: false,
-		source: false,
 		rating: false,
-		savePlaylistAsCompilation: false,
-		useNullSeparator: false,
-		saveID3v1: true,
-		multiArtistSeparator: "default",
-		singleAlbumArtist: false,
-		coverDescriptionUTF8: false,
+		...FIXED_TAGS,
 	},
 };
 
@@ -137,6 +120,12 @@ export function loadSettings(configFolder: string) {
 
 function check(settings: Settings) {
 	let changes = 0;
+	Object.keys(FIXED_SETTINGS).forEach((_iSet) => {
+		if (settings[_iSet] !== FIXED_SETTINGS[_iSet]) {
+			settings[_iSet] = FIXED_SETTINGS[_iSet];
+			changes++;
+		}
+	});
 	Object.keys(DEFAULT_SETTINGS).forEach((_iSet) => {
 		if (
 			settings[_iSet] === undefined ||
@@ -155,22 +144,17 @@ function check(settings: Settings) {
 			changes++;
 		}
 	});
+	Object.keys(FIXED_TAGS).forEach((_iSet) => {
+		if (settings.tags[_iSet] !== FIXED_TAGS[_iSet]) {
+			settings.tags[_iSet] = FIXED_TAGS[_iSet];
+			changes++;
+		}
+	});
 	if (settings.downloadLocation === "") {
 		settings.downloadLocation = DEFAULT_SETTINGS.downloadLocation;
 		changes++;
 	}
-	[
-		"tracknameTemplate",
-		"albumTracknameTemplate",
-		"playlistTracknameTemplate",
-		"playlistNameTemplate",
-		"artistNameTemplate",
-		"albumNameTemplate",
-		"playlistFilenameTemplate",
-		"coverImageTemplate",
-		"artistImageTemplate",
-		"paddingSize",
-	].forEach((template) => {
+	["playlistFilenameTemplate", "paddingSize"].forEach((template) => {
 		if (settings[template] === "") {
 			settings[template] = DEFAULT_SETTINGS[template];
 			changes++;

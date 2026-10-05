@@ -1,21 +1,17 @@
 import { CantStream, NotLoggedIn } from "@/helpers/errors.js";
 import { logger } from "@/helpers/logger.js";
-import { GUI_VERSION, WEBUI_PACKAGE_VERSION } from "@/helpers/versions.js";
 import {
 	Collection,
-	Convertable,
 	DEFAULT_SETTINGS,
 	Downloader,
 	generateDownloadObject,
 	loadSettings,
 	saveSettings,
 	Single,
-	SpotifyPlugin,
 	utils,
 	type DownloadObject,
 	type Listener,
 	type Settings,
-	type SpotifySettings,
 } from "deemix";
 import { Deezer, setDeezerCacheDir } from "deezer-sdk";
 import fs from "fs";
@@ -38,9 +34,7 @@ export class DeemixApp {
 	currentJob: boolean | Downloader | null;
 
 	deezerAvailable?: DeezerAvailable;
-	latestVersion: string | null;
 
-	plugins: Record<string, SpotifyPlugin>;
 	settings: Settings;
 
 	listener: Listener;
@@ -52,13 +46,8 @@ export class DeemixApp {
 		this.queue = {};
 		this.currentJob = null;
 
-		this.plugins = {
-			spotify: new SpotifyPlugin(),
-		};
-		this.latestVersion = null;
 		this.listener = listener;
 
-		this.plugins.spotify.setup();
 		this.restoreQueueFromDisk();
 	}
 
@@ -95,67 +84,16 @@ export class DeemixApp {
 		return this.deezerAvailable;
 	}
 
-	async getLatestVersion(force = false): Promise<string | null> {
-		if (this.latestVersion === null || force) {
-			try {
-				const responseJson = await got
-					.get(
-						`https://raw.githubusercontent.com/bambanah/deemix/main/packages/${GUI_VERSION !== undefined ? "gui" : "webui"}/package.json`
-					)
-					.json();
-				this.latestVersion = JSON.parse(JSON.stringify(responseJson)).version;
-			} catch (e) {
-				logger.error(e);
-				this.latestVersion = "NotFound";
-				return this.latestVersion;
-			}
-		}
-		return this.latestVersion;
-	}
-
-	parseVersion(version: string | null): any {
-		if (version === null || version === "continuous" || version === "NotFound")
-			return null;
-		try {
-			const matchResult =
-				version.match(/(\d+)\.(\d+)\.(\d+)-r(\d+)\.(.+)/) || [];
-			return {
-				year: parseInt(matchResult[1]),
-				month: parseInt(matchResult[2]),
-				day: parseInt(matchResult[3]),
-				revision: parseInt(matchResult[4]),
-				commit: matchResult[5] || "",
-			};
-		} catch (e) {
-			logger.error(e);
-			return null;
-		}
-	}
-
-	isUpdateAvailable(): boolean {
-		return (
-			this.latestVersion.localeCompare(
-				GUI_VERSION ?? WEBUI_PACKAGE_VERSION,
-				undefined,
-				{
-					numeric: true,
-				}
-			) === 1
-		);
-	}
-
 	getSettings() {
 		return {
 			settings: this.settings,
 			defaultSettings,
-			spotifySettings: this.plugins.spotify.getSettings(),
 		};
 	}
 
-	saveSettings(newSettings: Settings, newSpotifySettings: SpotifySettings) {
+	saveSettings(newSettings: Settings) {
 		saveSettings(newSettings, configFolder);
 		this.settings = newSettings;
-		this.plugins.spotify.saveSettings(newSpotifySettings);
 	}
 
 	getQueue() {
@@ -205,7 +143,6 @@ export class DeemixApp {
 					dz,
 					link,
 					bitrate,
-					this.plugins,
 					this.listener
 				);
 
@@ -298,8 +235,7 @@ export class DeemixApp {
 					.readFileSync(configFolder + `queue${sep}${currentUUID}.json`)
 					.toString()
 			);
-			let downloadObject: Single | Collection | Convertable | undefined =
-				undefined;
+			let downloadObject: Single | Collection | undefined = undefined;
 
 			switch (currentItem.__type__) {
 				case "Single":
@@ -308,20 +244,6 @@ export class DeemixApp {
 				case "Collection":
 					downloadObject = new Collection(currentItem);
 					break;
-				case "Convertable": {
-					const convertable = new Convertable(currentItem);
-					downloadObject = await this.plugins[convertable.plugin].convert(
-						dz,
-						convertable,
-						this.settings,
-						this.listener
-					);
-					fs.writeFileSync(
-						configFolder + `queue${sep}${downloadObject.uuid}.json`,
-						JSON.stringify({ ...downloadObject.toDict(), status: "inQueue" })
-					);
-					break;
-				}
 			}
 
 			if (typeof downloadObject === "undefined") return;
@@ -474,9 +396,10 @@ export class DeemixApp {
 								return;
 							}
 							break;
-						case "Convertable":
-							downloadObject = new Convertable(currentItem);
-							break;
+						default:
+							// Remove old incompatible queue items
+							fs.unlinkSync(configFolder + `queue${sep}${filename}`);
+							return;
 					}
 					this.queue[downloadObject.uuid] = downloadObject.getEssentialDict();
 					this.queue[downloadObject.uuid].status = "inQueue";

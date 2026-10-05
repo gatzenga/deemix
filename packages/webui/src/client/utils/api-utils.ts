@@ -20,18 +20,6 @@ export function fetchData(
 		});
 }
 
-export function sendToServer(key: string, data: Record<string, any>) {
-	const url = new URL(`${window.location.origin}${location.base}api/${key}`);
-
-	Object.keys(data).forEach((key) => {
-		url.searchParams.append(key, data[key]);
-	});
-
-	fetch(url.href).catch((error) => {
-		console.error("There has been a problem with your fetch operation:", error);
-	});
-}
-
 export function postToServer(endpoint: string, data?: Record<string, any>) {
 	const url = new URL(
 		`${window.location.origin}${location.base}api/${endpoint}`

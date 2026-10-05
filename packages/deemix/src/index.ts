@@ -1,4 +1,3 @@
-import BasePlugin from "@/plugins/base.js";
 import { type Deezer } from "deezer-sdk";
 import got from "got";
 import { Downloader } from "./downloader.js";
@@ -58,7 +57,6 @@ async function generateDownloadObject(
 	dz: Deezer,
 	link: string,
 	bitrate: number,
-	plugins: Record<string, BasePlugin> = {},
 	listener: Listener
 ): Promise<DownloadObject | DownloadObject[]> {
 	let link_type: string | null = null;
@@ -66,21 +64,7 @@ async function generateDownloadObject(
 
 	[link, link_type, link_id] = await parseLink(link);
 
-	// Link is not deezer - try to find a plugin that can handle it
-	if (!link_type || !link_id) {
-		for (const pluginName in plugins) {
-			const downloadObject = await plugins[pluginName].generateDownloadObject(
-				dz,
-				link,
-				bitrate,
-				listener
-			);
-
-			if (downloadObject) return downloadObject;
-		}
-
-		throw new LinkNotRecognized(link);
-	}
+	if (!link_type || !link_id) throw new LinkNotRecognized(link);
 
 	if (link_type === "track") return generateTrackItem(dz, link_id, bitrate);
 	if (link_type === "album") return generateAlbumItem(dz, link_id, bitrate);
@@ -107,7 +91,6 @@ const itemgen = {
 
 export * as decryption from "./decryption.js";
 export * from "./credentials.js";
-export * from "./plugins/index.js";
 export * from "./settings.js";
 export * as tagger from "./tagger.js";
 export * from "./types/index.js";

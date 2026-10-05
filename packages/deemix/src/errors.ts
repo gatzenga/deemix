@@ -36,34 +36,6 @@ export class NotYourPrivatePlaylist extends GenerationError {
 	}
 }
 
-export class SpotifyPlaylistNotAccessible extends GenerationError {
-	constructor(link: string) {
-		super(
-			link,
-			"Spotify playlist is not accessible via API with current app credentials."
-		);
-		this.name = "SpotifyPlaylistNotAccessible";
-	}
-}
-
-export class TrackNotOnDeezer extends GenerationError {
-	errid: string;
-	constructor(link: string) {
-		super(link, "Track not found on deezer!");
-		this.name = "TrackNotOnDeezer";
-		this.errid = "trackNotOnDeezer";
-	}
-}
-
-export class AlbumNotOnDeezer extends GenerationError {
-	errid: string;
-	constructor(link: string) {
-		super(link, "Album not found on deezer!");
-		this.name = "AlbumNotOnDeezer";
-		this.errid = "albumNotOnDeezer";
-	}
-}
-
 export class InvalidID extends GenerationError {
 	errid: string;
 	constructor(link: string) {
@@ -97,15 +69,6 @@ export class DownloadError extends DeemixError {
 	constructor() {
 		super();
 		this.name = "DownloadError";
-	}
-}
-
-export class PluginNotEnabledError extends DeemixError {
-	constructor(pluginName: string) {
-		const message = `${pluginName} plugin not enabled`;
-		super(message);
-
-		this.name = "PluginNotEnabledError";
 	}
 }
 

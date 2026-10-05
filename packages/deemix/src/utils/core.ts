@@ -141,7 +141,6 @@ export function formatListener(key: string, data) {
 			if (data.failed)
 				message += `${data.data.artist} - ${data.data.title} :: ${data.error}`;
 			if (data.progress) message += `Downloading: ${data.progress}%`;
-			if (data.conversion) message += `Converting: ${data.conversion}%`;
 
 			return !message ? "" : `[${data.title ?? data.uuid}] ${message}`;
 		case "downloadInfo":
@@ -215,10 +214,6 @@ export function formatListener(key: string, data) {
 			return `[${data.title ?? data.uuid}] Removed from the queue`;
 		case "finishDownload":
 			return `[${data.title ?? data.uuid}] Download complete`;
-		case "startConversion":
-			return `[${data.title ?? data.uuid}] Started converting`;
-		case "finishConversion":
-			return `[${data.title ?? data.uuid}] Conversion complete`;
 		default:
 			return message;
 	}

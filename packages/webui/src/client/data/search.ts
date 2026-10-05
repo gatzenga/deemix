@@ -84,32 +84,6 @@ export function formatArtist(artist: { [key: string]: any }) {
 	};
 }
 
-export function formatPlaylist(playlist: { [key: string]: any }) {
-	return {
-		/* Playlist */
-		playlistID: getPropertyWithFallback(playlist, "id", "PLAYLIST_ID"),
-		playlistTitle: getPropertyWithFallback(playlist, "title", "TITLE"),
-		playlistPictureMedium:
-			getPropertyWithFallback(playlist, "picture_medium") ||
-			`https://e-cdns-images.dzcdn.net/images/${playlist.PICTURE_TYPE}/${playlist.PLAYLIST_PICTURE}/156x156-000000-80-0-0.jpg`,
-		playlistLink:
-			getPropertyWithFallback(playlist, "link") ||
-			`https://deezer.com/playlist/${playlist.PLAYLIST_ID}`,
-		playlistTracksNumber: getPropertyWithFallback(
-			playlist,
-			"nb_tracks",
-			"NB_SONG"
-		),
-
-		/* Artist */
-		artistName: getPropertyWithFallback(
-			playlist,
-			"user.name",
-			"PARENT_USERNAME"
-		),
-	};
-}
-
 export function formatTitle(track: { [key: string]: any }) {
 	const hasTitleVersion =
 		track.trackTitleVersion &&

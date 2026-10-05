@@ -16,6 +16,7 @@ import {
 	removeDuplicateArtists,
 	removeFeatures,
 } from "../utils/index.js";
+import { cleanAlbumName, cleanName } from "../utils/cleanNames.js";
 import { Album } from "./Album.js";
 import { Artist } from "./Artist.js";
 import { CustomDate } from "./CustomDate.js";
@@ -366,14 +367,7 @@ class Track {
 	}
 
 	applySettings(settings: Settings) {
-		// Check if should save the playlist as a compilation
-		if (settings.tags.savePlaylistAsCompilation && this.playlist) {
-			this.trackNumber = this.position;
-			this.discNumber = 1;
-			this.album.makePlaylistCompilation(this.playlist);
-		} else {
-			if (this.album.date) this.date = this.album.date;
-		}
+		if (this.album.date) this.date = this.album.date;
 		this.dateString = this.date.format(settings.dateFormat);
 		this.album.dateString = this.album.date.format(settings.dateFormat);
 		if (this.playlist)
@@ -419,10 +413,9 @@ class Track {
 			this.album.title = this.album.getCleanTitle();
 		}
 
-		// Remove (Album Version) from tracks that have that
-		if (settings.removeAlbumVersion && this.title.includes("Album Version")) {
-			this.title = this.title.replace(/ ?\(Album Version\)/g, "").trim();
-		}
+		// Remove unwanted terms (like "Remaster") from track and album title
+		this.title = cleanName(this.title);
+		this.album.title = cleanAlbumName(this.album.title);
 
 		// Change title and artist casing if needed
 		if (settings.titleCasing !== "nothing") {

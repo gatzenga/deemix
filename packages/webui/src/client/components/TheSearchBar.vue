@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { pinia } from "@/stores";
-import { useAppInfoStore } from "@/stores/appInfo";
 import { fetchData } from "@/utils/api-utils";
 import { sendAddToQueue } from "@/utils/downloads";
 import { emitter } from "@/utils/emitter";
 import { isValidURL } from "@/utils/utils";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
-const appInfoStore = useAppInfoStore(pinia);
 const route = useRoute();
 const router = useRouter();
 
@@ -17,8 +14,6 @@ const { t } = useI18n();
 
 const searchbar = ref<HTMLInputElement | null>(null);
 const lastTextSearch = ref("");
-
-const showSearchButton = computed(() => appInfoStore.showSearchButton);
 
 function focusSearchBar(keyEvent: KeyboardEvent) {
 	if (keyEvent.keyCode === 70 && keyEvent.ctrlKey) {
@@ -32,24 +27,6 @@ function deleteSearchBarContent(keyEvent: KeyboardEvent) {
 
 	searchbar.value.value = "";
 	searchbar.value.focus();
-}
-
-async function clickPerformSearch(ev: MouseEvent) {
-	ev.preventDefault();
-	const term = searchbar.value.value;
-	const isEmptySearch = term === "";
-	if (isEmptySearch) return;
-
-	await performSearch(term, false);
-}
-
-async function rightClickPerformSearch(ev: MouseEvent) {
-	ev.preventDefault();
-	ev.stopPropagation();
-	const term = searchbar.value.value;
-	if (!term) return;
-
-	await performSearch(term, true);
 }
 
 async function keyPerformSearch(keyEvent: KeyboardEvent) {
@@ -134,8 +111,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<header id="search" aria-label="searchbar" :class="{ showSearchButton }">
-		<div v-show="!showSearchButton" class="search__icon hidden md:block">
+	<header id="search" aria-label="searchbar">
+		<div class="search__icon hidden md:block">
 			<i class="material-icons">search</i>
 		</div>
 
@@ -151,15 +128,6 @@ onUnmounted(() => {
 			autofocus
 			@keyup="keyPerformSearch($event)"
 		/>
-
-		<a
-			v-show="showSearchButton"
-			href="#"
-			class="searchButton"
-			@contextmenu="rightClickPerformSearch"
-			@click="clickPerformSearch"
-			><i class="material-icons">search</i></a
-		>
 	</header>
 </template>
 
@@ -223,28 +191,7 @@ input[type="search"]::-webkit-search-cancel-button {
 #search #searchbar:-webkit-autofill:active {
 	box-shadow: 0 0 0 45px var(--secondary-background) inset !important;
 }
-#search .searchButton {
-	background-color: var(--primary-color);
-	color: var(--primary-text);
-	align-self: stretch;
-	width: 48px;
-	display: flex;
-	text-decoration: none;
-	align-items: center;
-	justify-content: center;
-	border-radius: 0px 15px 15px 0px;
-	margin-left: 1em;
-}
-#search .searchButton i {
-	font-size: 2rem;
-}
-#search .searchButton i::selection {
-	background: none;
-}
 #search:focus-within {
 	border: 1px solid var(--foreground);
-}
-#search.showSearchButton {
-	padding: 0 0 0 1em;
 }
 </style>

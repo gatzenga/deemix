@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import ThemePicker from "@/components/ThemePicker.vue";
-
 import { mainNavItems } from "@/data/sidebar";
 import { pinia } from "@/stores";
 import { useAppInfoStore } from "@/stores/appInfo";
@@ -12,8 +10,6 @@ const { t } = useI18n();
 const route = useRoute();
 const appInfoStore = useAppInfoStore(pinia);
 
-const updateAvailable = computed(() => appInfoStore.updateAvailable);
-const hasSlimSidebar = computed(() => appInfoStore.hasSlimSidebar);
 const isMobileSidebarOpen = computed(() => appInfoStore.isMobileSidebarOpen);
 
 function closeSidebar() {
@@ -35,10 +31,8 @@ function handleNavClick() {
 	></div>
 
 	<aside
-		class="bg-panels-bg text-foreground left-0 top-0 flex h-screen flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+		class="bg-panels-bg text-foreground left-0 top-0 flex h-screen min-w-56 flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
 		:class="{
-			'slim-sidebar w-20': hasSlimSidebar,
-			'min-w-56': !hasSlimSidebar,
 			'fixed z-50 -translate-x-full': !isMobileSidebarOpen,
 			'fixed z-50 translate-x-0': isMobileSidebarOpen,
 			'md:flex': true,
@@ -47,18 +41,14 @@ function handleNavClick() {
 		role="navigation"
 	>
 		<router-link
-			:to="{ name: 'Home' }"
+			:to="{ name: 'Search' }"
 			class="flex w-full justify-center"
 			@click="handleNavClick"
 		>
 			<img
 				src="@/assets/deemix-icon.svg?url"
 				alt="deemix-icon"
-				class="mx-auto"
-				:class="{
-					'my-2 w-14': hasSlimSidebar,
-					'my-5 w-24': !hasSlimSidebar,
-				}"
+				class="mx-auto my-5 w-24"
 			/>
 		</router-link>
 
@@ -70,7 +60,6 @@ function handleNavClick() {
 				class="hover:bg-background-main text-foreground group relative flex h-16 w-full items-center px-4 no-underline"
 				:class="{
 					'bg-background-main': route.name === link.routerName,
-					'justify-center': hasSlimSidebar,
 				}"
 				:to="{ name: link.routerName }"
 				@click="handleNavClick"
@@ -81,19 +70,10 @@ function handleNavClick() {
 				>
 					{{ link.icon }}
 				</i>
-				<span
-					:class="{ hidden: hasSlimSidebar }"
-					class="whitespace-no-wrap ml-3 overflow-hidden capitalize"
-				>
+				<span class="whitespace-no-wrap ml-3 overflow-hidden capitalize">
 					{{ t(link.label) }}
 				</span>
-				<span
-					v-if="link.name === 'about' && updateAvailable"
-					class="absolute left-10 top-3 h-3 w-3 rounded-full bg-red-600"
-				></span>
 			</router-link>
 		</nav>
-
-		<ThemePicker />
 	</aside>
 </template>

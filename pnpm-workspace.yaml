@@ -6,9 +6,9 @@ nodeLinker: "hoisted"
 
 allowBuilds:
   electron: true
-  electron-winstaller: true
+  electron-winstaller: set this to true or false
   esbuild: true
-  fs-xattr: true
-  macos-alias: true
+  fs-xattr: set this to true or false
+  macos-alias: set this to true or false
   utf-8-validate: true
   vue-demi: true

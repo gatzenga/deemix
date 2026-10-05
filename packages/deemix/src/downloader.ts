@@ -15,7 +15,7 @@ import { Collection } from "./download-objects/Collection.js";
 import { DownloadObject } from "./download-objects/DownloadObject.js";
 import { Single } from "./download-objects/Single.js";
 import { DownloadCanceled, DownloadFailed, ErrorMessages } from "./errors.js";
-import { DEFAULT_SETTINGS, OverwriteOption } from "./settings.js";
+import { ARTWORK, DEFAULT_SETTINGS, OverwriteOption } from "./settings.js";
 import { Album } from "./types/Album.js";
 import type { Listener } from "./types/listener.js";
 import { StaticPicture } from "./types/Picture.js";
@@ -317,18 +317,18 @@ export class Downloader {
 		}
 
 		// Generate covers URLs
-		let embeddedImageFormat = `jpg-${this.settings.jpegImageQuality}`;
-		if (this.settings.embeddedArtworkPNG) embeddedImageFormat = "png";
+		let embeddedImageFormat = `jpg-${ARTWORK.jpegImageQuality}`;
+		if (ARTWORK.embeddedPNG) embeddedImageFormat = "png";
 
 		track.album.embeddedCoverURL = track.album.pic.getURL(
-			this.settings.embeddedArtworkSize,
+			ARTWORK.embeddedSize,
 			embeddedImageFormat
 		);
 		let ext = track.album.embeddedCoverURL.slice(-4);
 		if (ext.charAt(0) !== ".") ext = ".jpg";
 		track.album.embeddedCoverPath = `${TEMPDIR}/${
 			track.album.isPlaylist ? "pl" + track.playlist.id : "alb" + track.album.id
-		}_${this.settings.embeddedArtworkSize}${ext}`;
+		}_${ARTWORK.embeddedSize}${ext}`;
 
 		// Download and cache the coverart
 		if (!this.coverQueue[track.album.embeddedCoverPath]) {
@@ -345,15 +345,12 @@ export class Downloader {
 		// Save local album art
 		if (coverPath) {
 			returnData.albumURLs = [];
-			this.settings.localArtworkFormat.split(",").forEach((picFormat) => {
+			ARTWORK.localFormat.split(",").forEach((picFormat) => {
 				if (["png", "jpg"].includes(picFormat)) {
 					let extendedFormat = picFormat;
 					if (extendedFormat === "jpg")
-						extendedFormat += `-${this.settings.jpegImageQuality}`;
-					const url = track.album.pic.getURL(
-						this.settings.localArtworkSize,
-						extendedFormat
-					);
+						extendedFormat += `-${ARTWORK.jpegImageQuality}`;
+					const url = track.album.pic.getURL(ARTWORK.localSize, extendedFormat);
 					// Skip non deezer pictures at the wrong format
 					if (track.album.pic instanceof StaticPicture && picFormat !== "jpg")
 						return;
@@ -362,7 +359,7 @@ export class Downloader {
 			});
 			returnData.albumPath = coverPath;
 			returnData.albumFilename = generateAlbumName(
-				this.settings.coverImageTemplate,
+				ARTWORK.coverTemplate,
 				track.album,
 				this.settings,
 				track.playlist
@@ -372,12 +369,12 @@ export class Downloader {
 		// Save artist art
 		if (artistPath) {
 			returnData.artistURLs = [];
-			this.settings.localArtworkFormat.split(",").forEach((picFormat) => {
+			ARTWORK.localFormat.split(",").forEach((picFormat) => {
 				// Deezer doesn't support png artist images
 				if (picFormat === "jpg") {
-					const extendedFormat = `${picFormat}-${this.settings.jpegImageQuality}`;
+					const extendedFormat = `${picFormat}-${ARTWORK.jpegImageQuality}`;
 					const url = track.album.mainArtist.pic.getURL(
-						this.settings.localArtworkSize,
+						ARTWORK.localSize,
 						extendedFormat
 					);
 					// Skip non deezer pictures at the wrong format
@@ -387,7 +384,7 @@ export class Downloader {
 			});
 			returnData.artistPath = artistPath;
 			returnData.artistFilename = generateArtistName(
-				this.settings.artistImageTemplate,
+				ARTWORK.artistTemplate,
 				track.album.mainArtist,
 				this.settings,
 				track.album.rootArtist
@@ -397,13 +394,13 @@ export class Downloader {
 		// Save playlist art
 		if (track.playlist) {
 			if (this.playlistURLs.length === 0) {
-				this.settings.localArtworkFormat.split(",").forEach((picFormat) => {
+				ARTWORK.localFormat.split(",").forEach((picFormat) => {
 					if (["png", "jpg"].includes(picFormat)) {
 						let extendedFormat = picFormat;
 						if (extendedFormat === "jpg")
-							extendedFormat += `-${this.settings.jpegImageQuality}`;
+							extendedFormat += `-${ARTWORK.jpegImageQuality}`;
 						const url = track.playlist.pic.getURL(
-							this.settings.localArtworkSize,
+							ARTWORK.localSize,
 							extendedFormat
 						);
 						// Skip non deezer pictures at the wrong format
@@ -422,7 +419,7 @@ export class Downloader {
 					this.settings.dateFormat
 				);
 				this.playlistCovername = generateAlbumName(
-					this.settings.coverImageTemplate,
+					ARTWORK.coverTemplate,
 					track.playlist,
 					this.settings,
 					track.playlist
@@ -615,7 +612,7 @@ export class Downloader {
 
 		// Save local album artwork
 		try {
-			if (this.settings.saveArtwork && track.albumPath) {
+			if (ARTWORK.saveCover && track.albumPath) {
 				await each(track.albumURLs, async (image: any) => {
 					await downloadImage(
 						image.url,
@@ -630,7 +627,7 @@ export class Downloader {
 
 		// Save local artist artwork
 		try {
-			if (this.settings.saveArtworkArtist && track.artistPath) {
+			if (ARTWORK.saveArtist && track.artistPath) {
 				await each(track.artistURLs, async (image: any) => {
 					await downloadImage(
 						image.url,
@@ -716,7 +713,7 @@ export class Downloader {
 
 			// Save local album artwork
 			try {
-				if (this.settings.saveArtwork && track.albumPath) {
+				if (ARTWORK.saveCover && track.albumPath) {
 					await each(track.albumURLs, async (image: any) => {
 						await downloadImage(
 							image.url,
@@ -731,7 +728,7 @@ export class Downloader {
 
 			// Save local artist artwork
 			try {
-				if (this.settings.saveArtworkArtist && track.artistPath) {
+				if (ARTWORK.saveArtist && track.artistPath) {
 					await each(track.artistURLs, async (image: any) => {
 						await downloadImage(
 							image.url,
@@ -771,11 +768,7 @@ export class Downloader {
 
 		// Save Playlist Artwork
 		try {
-			if (
-				this.settings.saveArtwork &&
-				this.playlistCovername &&
-				!this.settings.tags.savePlaylistAsCompilation
-			) {
+			if (ARTWORK.saveCover && this.playlistCovername) {
 				await each(this.playlistURLs, async (image) => {
 					await downloadImage(
 						image.url,

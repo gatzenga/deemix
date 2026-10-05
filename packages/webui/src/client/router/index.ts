@@ -7,13 +7,7 @@ import {
 } from "vue-router";
 
 // Pages
-import About from "@/views/AboutView.vue";
-import Charts from "@/views/ChartsView.vue";
 import Errors from "@/views/ErrorsView.vue";
-import Favorites from "@/views/FavoritesView.vue";
-import Home from "@/views/HomeView.vue";
-import InfoArl from "@/views/InfoArl.vue";
-import InfoSpotifyFeatures from "@/views/InfoSpotifyFeatures.vue";
 import Tracklist from "@/views/TracklistView.vue";
 
 const Search = () => import("@/views/SearchView.vue");
@@ -22,14 +16,6 @@ const Artist = () => import("@/views/ArtistView.vue");
 const LinkAnalyzer = () => import("@/views/LinkAnalyzer.vue");
 
 const routes: RouteRecordRaw[] = [
-	{
-		path: "/",
-		name: "Home",
-		component: Home,
-		meta: {
-			notKeepAlive: true,
-		},
-	},
 	{
 		path: "/tracklist/:type/:id",
 		name: "Tracklist",
@@ -54,27 +40,6 @@ const routes: RouteRecordRaw[] = [
 		component: Tracklist,
 	},
 	{
-		path: "/spotify-playlist/:id",
-		name: "Spotify Playlist",
-		component: Tracklist,
-	},
-	{
-		path: "/charts",
-		name: "Charts",
-		component: Charts,
-		meta: {
-			notKeepAlive: true,
-		},
-	},
-	{
-		path: "/favorites",
-		name: "Favorites",
-		component: Favorites,
-		meta: {
-			notKeepAlive: true,
-		},
-	},
-	{
 		path: "/errors",
 		name: "Errors",
 		component: Errors,
@@ -83,21 +48,6 @@ const routes: RouteRecordRaw[] = [
 		path: "/link-analyzer",
 		name: "Link Analyzer",
 		component: LinkAnalyzer,
-	},
-	{
-		path: "/about",
-		name: "About",
-		component: About,
-	},
-	{
-		path: "/info-arl",
-		name: "ARL",
-		component: InfoArl,
-	},
-	{
-		path: "/info-spotify",
-		name: "Spotify Features",
-		component: InfoSpotifyFeatures,
 	},
 	{
 		path: "/settings",
@@ -112,10 +62,10 @@ const routes: RouteRecordRaw[] = [
 			notKeepAlive: true,
 		},
 	},
-	// 404 client side
+	// Start page and 404 client side
 	{
-		path: "/",
-		component: Home,
+		path: "/:pathMatch(.*)*",
+		redirect: { name: "Search" },
 	},
 ];
 
@@ -128,7 +78,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _, next) => {
-	if (to.name && to.name !== "Home") {
+	if (to.name) {
 		document.title = to.name.toString() + " · Deemix";
 	} else {
 		document.title = "Deemix";
@@ -161,18 +111,6 @@ router.beforeEach((to, _, next) => {
 			fetchData("getTracklist", getTracklistParams).then((playlistData) => {
 				emitter.emit("showPlaylist", playlistData);
 			});
-			break;
-		}
-		case "Spotify Playlist": {
-			const getTracklistParams = {
-				type: "spotifyplaylist",
-				id: to.params.id,
-			};
-			fetchData("getTracklist", getTracklistParams).then(
-				(spotifyPlaylistData) => {
-					emitter.emit("showSpotifyPlaylist", spotifyPlaylistData);
-				}
-			);
 			break;
 		}
 

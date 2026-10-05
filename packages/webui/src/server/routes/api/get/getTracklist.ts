@@ -7,7 +7,6 @@ const path: ApiHandler["path"] = "/getTracklist";
 const handler: ApiHandler["handler"] = async (req, res) => {
 	if (!sessionDZ[req.session.id]) sessionDZ[req.session.id] = new Deezer();
 	const dz = sessionDZ[req.session.id];
-	const deemix = req.app.get("deemix");
 
 	const list_id = String(req.query.id);
 	const list_type = String(req.query.type);
@@ -21,54 +20,6 @@ const handler: ApiHandler["handler"] = async (req, res) => {
 				}
 			);
 			res.send(artistAPI);
-			break;
-		}
-		case "spotifyplaylist":
-		case "spotify_playlist": {
-			if (!deemix.plugins.spotify.enabled) {
-				res.send({
-					collaborative: false,
-					description: "",
-					external_urls: { spotify: null },
-					followers: { total: 0, href: null },
-					id: null,
-					images: [],
-					name: "Something went wrong",
-					owner: {
-						display_name: "Error",
-						id: null,
-					},
-					public: true,
-					tracks: [],
-					type: "playlist",
-					uri: null,
-				});
-				break;
-			}
-			const sp = deemix.plugins.spotify.sp;
-			const playlist = await sp.playlists.getPlaylist(list_id);
-			let tracklist = playlist.tracks.items;
-			while (playlist.tracks.next) {
-				const regExec = /offset=(\d+)&limit=(\d+)/g.exec(playlist.tracks.next);
-				const offset = regExec![1];
-				const limit = regExec![2];
-				const playlistTracks = await sp.playlists.getPlaylistItems(
-					list_id,
-					undefined,
-					undefined,
-					limit,
-					offset
-				);
-
-				playlist.tracks = playlistTracks;
-				tracklist = tracklist.concat(playlist.tracks.items);
-			}
-			tracklist.forEach((item: any, i: number) => {
-				tracklist[i] = item.track;
-				tracklist[i].selected = false;
-			});
-			playlist.tracks = tracklist;
-			res.send(playlist);
 			break;
 		}
 		default: {

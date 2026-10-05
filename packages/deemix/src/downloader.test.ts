@@ -35,11 +35,7 @@ describe("Downloader.afterDownloadCollection", () => {
 			illegalCharacterReplacer: "_",
 			logErrors: false,
 			logSearched: false,
-			saveArtwork: false,
-			saveArtworkArtist: false,
-			tags: {
-				savePlaylistAsCompilation: false,
-			},
+			tags: {},
 			executeCommand: "",
 		} as any;
 

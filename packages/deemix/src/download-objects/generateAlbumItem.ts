@@ -83,7 +83,11 @@ export async function generateAlbumItem(
 		);
 	}
 
-	const tracksArray = await dz.gw.get_album_tracks(id);
+	const tracksArray = (await dz.gw.get_album_tracks(id)).sort(
+		(a: GWTrack, b: GWTrack) =>
+			Number(a.DISK_NUMBER) - Number(b.DISK_NUMBER) ||
+			Number(a.TRACK_NUMBER) - Number(b.TRACK_NUMBER)
+	);
 
 	let cover: string;
 	if (albumAPI.cover_small) {

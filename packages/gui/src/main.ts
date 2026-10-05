@@ -11,13 +11,9 @@ import {
 import contextMenu from "electron-context-menu";
 import fs from "fs";
 import { fileURLToPath } from "node:url";
-import { platform } from "os";
 import { join } from "path";
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-if (require("electron-squirrel-startup") === true) app.quit();
 
 const argv = await yargs(hideBin(process.argv)).options({
 	port: { type: "string", default: "6595" },
@@ -60,10 +56,7 @@ async function main() {
 		y: state.y,
 		useContentSize: true,
 		autoHideMenuBar: true,
-		icon: join(
-			path.dirname(fileURLToPath(import.meta.url)),
-			platform() === "win32" ? "build/icon.ico" : "build/64x64.png"
-		),
+		icon: join(path.dirname(fileURLToPath(import.meta.url)), "build/64x64.png"),
 		webPreferences: {
 			preload: join(path.dirname(fileURLToPath(import.meta.url)), "preload.js"),
 		},

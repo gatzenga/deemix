@@ -9,9 +9,6 @@ describe("utils utils (needs refactor)", () => {
 		test("returns a positive result with all supported URLs", () => {
 			expect(isValidURL("https://www.deezer.com")).toBe(true);
 			expect(isValidURL("https://deezer.page.link")).toBe(true);
-			expect(isValidURL("https://open.spotify.com")).toBe(true);
-			expect(isValidURL("https://link.tospotify.com")).toBe(true);
-			expect(isValidURL("spotify:something")).toBe(true);
 		});
 
 		test("returns a negative result with a not supported URL", () => {

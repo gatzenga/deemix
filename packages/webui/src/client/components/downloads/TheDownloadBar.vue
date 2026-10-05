@@ -34,8 +34,6 @@ const queueComplete = ref([]);
 const isExpanded = ref(localStorage.getItem("downloadTabOpen") === "true");
 
 const clientMode = computed(() => loginStore.clientMode);
-const isSlim = computed(() => appInfoStore.hasSlimDownloads);
-const showTags = computed(() => appInfoStore.showBitrateTags);
 const isMobileDownloadsOpen = computed(
 	() => appInfoStore.isMobileDownloadsOpen
 );
@@ -369,11 +367,6 @@ onMounted(() => {
 		})
 		.catch(console.error);
 
-	// Check if download tab has slim entries
-	if (localStorage.getItem("slimDownloads") === "true") {
-		list.value.classList.add("slim");
-	}
-
 	if (isExpanded.value) {
 		setTabWidth(cachedTabWidth.value);
 	}
@@ -465,7 +458,6 @@ onUnmounted(() => {
 				v-for="item in queueList"
 				:key="item.uuid"
 				:queue-item="item"
-				:show-tags="showTags"
 				@show-errors="showErrorsTab"
 				@remove-item="onRemoveItem"
 				@retry-download="onRetryDownload"
@@ -536,18 +528,11 @@ onUnmounted(() => {
 			</i>
 		</div>
 
-		<div
-			v-show="isExpanded"
-			id="download_list"
-			ref="list"
-			class="w-full pr-2"
-			:class="{ slim: isSlim }"
-		>
+		<div v-show="isExpanded" id="download_list" ref="list" class="w-full pr-2">
 			<QueueItem
 				v-for="item in queueList"
 				:key="item.uuid"
 				:queue-item="item"
-				:show-tags="showTags"
 				@show-errors="showErrorsTab"
 				@remove-item="onRemoveItem"
 				@retry-download="onRetryDownload"

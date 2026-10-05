@@ -45,8 +45,7 @@ function selectedLinks() {
 	const selected = [];
 	if (body.value) {
 		body.value.forEach((item) => {
-			if (item.type === "track" && item.selected)
-				selected.push(type.value === "spotifyPlaylist" ? item.uri : item.link);
+			if (item.type === "track" && item.selected) selected.push(item.link);
 		});
 	}
 	return selected.join(";");
@@ -112,36 +111,6 @@ function showPlaylist(data) {
 		body.value = playlistTracks;
 	}
 }
-function showSpotifyPlaylist(data) {
-	reset();
-
-	const {
-		uri: playlistURI,
-		name: playlistName,
-		images,
-		images: { length: numberOfImages },
-		owner: { display_name: ownerName },
-		tracks: playlistTracks,
-		tracks: { length: numberOfTracks },
-	} = data;
-
-	type.value = "spotifyPlaylist";
-	link.value = playlistURI;
-	title.value = playlistName;
-	image.value = numberOfImages
-		? images[0].url
-		: "https://e-cdns-images.dzcdn.net/images/cover/d41d8cd98f00b204e9800998ecf8427e/1000x1000-000000-80-0-0.jpg";
-	release_date.value = "";
-	metadata.value = `${t("globals.by", {
-		artist: ownerName,
-	})} • ${t("globals.listTabs.trackN", numberOfTracks)}`;
-
-	if (isEmpty(playlistTracks)) {
-		body.value = null;
-	} else {
-		body.value = playlistTracks;
-	}
-}
 function selectRow(_, track) {
 	track.selected = !track.selected;
 }
@@ -149,7 +118,6 @@ function selectRow(_, track) {
 onMounted(() => {
 	emitter.on("showAlbum", showAlbum);
 	emitter.on("showPlaylist", showPlaylist);
-	emitter.on("showSpotifyPlaylist", showSpotifyPlaylist);
 });
 </script>
 
@@ -197,159 +165,120 @@ onMounted(() => {
 				</tr>
 			</thead>
 			<tbody>
-				<template v-if="type !== 'spotifyPlaylist'">
-					<template v-for="(track, index) in body">
-						<tr
-							v-if="track.type === 'track'"
-							:key="track.id"
-							@click="selectRow(index, track)"
-						>
-							<td class="table__cell--x-small table__cell--center">
-								<div
-									class="table__cell-content table__cell-content--vertical-center"
+				<template v-for="(track, index) in body">
+					<tr
+						v-if="track.type === 'track'"
+						:key="track.id"
+						@click="selectRow(index, track)"
+					>
+						<td class="table__cell--x-small table__cell--center">
+							<div
+								class="table__cell-content table__cell-content--vertical-center"
+							>
+								<i
+									:class="{
+										preview_playlist_controls: track.preview,
+										'cursor-pointer': track.preview,
+										disabled: !track.preview,
+									}"
+									:data-preview="track.preview"
+									:data-link-only="track.link"
+									:title="t('globals.play_hint')"
+									class="material-icons"
+									v-on="{ click: track.preview ? playPausePreview : false }"
 								>
-									<i
-										:class="{
-											preview_playlist_controls: track.preview,
-											'cursor-pointer': track.preview,
-											disabled: !track.preview,
-										}"
-										:data-preview="track.preview"
-										:data-link-only="track.link"
-										:title="t('globals.play_hint')"
-										class="material-icons"
-										v-on="{ click: track.preview ? playPausePreview : false }"
-									>
-										play_arrow
-									</i>
-								</div>
-							</td>
-							<td class="table__cell--small table__cell--center track_position">
+									play_arrow
+								</i>
+							</div>
+						</td>
+						<td class="table__cell--small table__cell--center track_position">
+							{{
+								type === "album"
+									? track.track_position
+									: body.indexOf(track) + 1
+							}}
+						</td>
+						<td class="table__cell--large table__cell--with-icon">
+							<div
+								class="table__cell-content table__cell-content--vertical-center"
+							>
+								<i
+									v-if="track.explicit_lyrics"
+									class="material-icons title-icon"
+								>
+									explicit
+								</i>
 								{{
-									type === "album"
-										? track.track_position
-										: body.indexOf(track) + 1
+									track.title +
+									(track.title_version &&
+									track.title.indexOf(track.title_version) == -1
+										? " " + track.title_version
+										: "")
 								}}
-							</td>
-							<td class="table__cell--large table__cell--with-icon">
-								<div
-									class="table__cell-content table__cell-content--vertical-center"
-								>
-									<i
-										v-if="track.explicit_lyrics"
-										class="material-icons title-icon"
-									>
-										explicit
-									</i>
-									{{
-										track.title +
-										(track.title_version &&
-										track.title.indexOf(track.title_version) == -1
-											? " " + track.title_version
-											: "")
-									}}
-								</div>
-							</td>
-							<router-link
-								v-slot="{ navigate }"
-								:to="{ name: 'Artist', params: { id: track.artist.id } }"
-								custom
-							>
-								<td
-									role="link"
-									class="table__cell--medium table__cell--center cursor-pointer"
-									@click="navigate"
-								>
-									{{ track.artist.name }}
-								</td>
-							</router-link>
-							<router-link
-								v-if="type === 'playlist'"
-								v-slot="{ navigate }"
-								:to="{ name: 'Album', params: { id: track.album.id } }"
-								custom
-							>
-								<td
-									role="link"
-									class="table__cell--medium table__cell--center cursor-pointer"
-									@click="navigate"
-								>
-									{{ track.album.title }}
-								</td>
-							</router-link>
-							<td
-								:class="{
-									'table__cell--small': type === 'album',
-									'table__cell--x-small': type === 'playlist',
-								}"
-								class="table__cell--center"
-							>
-								{{ convertDuration(track.duration) }}
-							</td>
-							<td class="table__icon table__cell--center">
-								<input
-									v-model="track.selected"
-									class="cursor-pointer"
-									type="checkbox"
-								/>
-							</td>
-						</tr>
-						<tr
-							v-else-if="track.type == 'disc_separator'"
-							:key="track.id + '_disc_separator'"
-							class="table__row-no-highlight"
-							style="opacity: 0.54"
+							</div>
+						</td>
+						<router-link
+							v-slot="{ navigate }"
+							:to="{ name: 'Artist', params: { id: track.artist.id } }"
+							custom
 						>
-							<td>
-								<div
-									class="table__cell-content table__cell-content--vertical-center"
-									style="opacity: 0.54"
-								>
-									<i class="material-icons">album</i>
-								</div>
-							</td>
-							<td class="table__cell--center">
-								{{ track.number }}
-							</td>
-							<td colspan="4"></td>
-						</tr>
-					</template>
-				</template>
-				<template v-else>
-					<tr v-for="(track, i) in body" :key="track.id">
-						<td>
-							<i
-								v-if="track.preview_url"
-								:class="{
-									preview_playlist_controls: track.preview_url,
-									'cursor-pointer': track.preview_url,
-								}"
-								:data-preview="track.preview_url"
-								:title="t('globals.play_hint')"
-								class="material-icons"
-								@click="playPausePreview"
+							<td
+								role="link"
+								class="table__cell--medium table__cell--center cursor-pointer"
+								@click="navigate"
 							>
-								play_arrow
-							</i>
-							<i v-else class="material-icons disabled">play_arrow</i>
-						</td>
-						<td>{{ i + 1 }}</td>
-						<td class="flex items-center">
-							<i v-if="track.explicit" class="material-icons title-icon"
-								>explicit</i
+								{{ track.artist.name }}
+							</td>
+						</router-link>
+						<router-link
+							v-if="type === 'playlist'"
+							v-slot="{ navigate }"
+							:to="{ name: 'Album', params: { id: track.album.id } }"
+							custom
+						>
+							<td
+								role="link"
+								class="table__cell--medium table__cell--center cursor-pointer"
+								@click="navigate"
 							>
-							{{ track.name }}
+								{{ track.album.title }}
+							</td>
+						</router-link>
+						<td
+							:class="{
+								'table__cell--small': type === 'album',
+								'table__cell--x-small': type === 'playlist',
+							}"
+							class="table__cell--center"
+						>
+							{{ convertDuration(track.duration) }}
 						</td>
-						<td>{{ track.artists[0].name }}</td>
-						<td>{{ track.album.name }}</td>
-						<td>{{ convertDuration(Math.floor(track.duration_ms / 1000)) }}</td>
-						<td>
+						<td class="table__icon table__cell--center">
 							<input
 								v-model="track.selected"
 								class="cursor-pointer"
 								type="checkbox"
 							/>
 						</td>
+					</tr>
+					<tr
+						v-else-if="track.type == 'disc_separator'"
+						:key="track.id + '_disc_separator'"
+						class="table__row-no-highlight"
+						style="opacity: 0.54"
+					>
+						<td>
+							<div
+								class="table__cell-content table__cell-content--vertical-center"
+								style="opacity: 0.54"
+							>
+								<i class="material-icons">album</i>
+							</div>
+						</td>
+						<td class="table__cell--center">
+							{{ track.number }}
+						</td>
+						<td colspan="4"></td>
 					</tr>
 				</template>
 			</tbody>

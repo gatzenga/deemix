@@ -67,72 +67,44 @@ export function pad(
 	return (num + "").padStart(paddingSize, "0");
 }
 
-const shouldCreatePlaylistFolder = (track: Track, settings: Settings) => {
-	return (
-		settings.createPlaylistFolder &&
-		track.playlist &&
-		!settings.tags.savePlaylistAsCompilation
-	);
+// Fixed folder structure: Artist/Album for albums, a playlist folder for
+// playlists and no separate folders per disc
+const ARTIST_FOLDER_TEMPLATE = "%artist%";
+const ALBUM_FOLDER_TEMPLATE = "%album%";
+const PLAYLIST_FOLDER_TEMPLATE = "%playlist%";
+
+const shouldCreatePlaylistFolder = (track: Track) => {
+	return !!track.playlist;
 };
 
-const shouldCreateArtistFolder = (track: Track, settings: Settings) => {
-	return (
-		(settings.createArtistFolder && !track.playlist) ||
-		(settings.createArtistFolder &&
-			track.playlist &&
-			settings.tags.savePlaylistAsCompilation) ||
-		(settings.createArtistFolder &&
-			track.playlist &&
-			settings.createStructurePlaylist)
-	);
+const shouldCreateArtistFolder = (track: Track) => {
+	return !track.playlist;
 };
 
-const shouldCreateAlbumFolder = (
-	track: Track,
-	settings: Settings,
-	singleTrack: boolean
-) => {
-	return (
-		settings.createAlbumFolder &&
-		(!singleTrack || (singleTrack && settings.createSingleFolder)) &&
-		(!track.playlist ||
-			(track.playlist && settings.tags.savePlaylistAsCompilation) ||
-			(track.playlist && settings.createStructurePlaylist))
-	);
+const shouldCreateAlbumFolder = (track: Track, singleTrack: boolean) => {
+	return !singleTrack && !track.playlist;
 };
 
-const shouldCreateCDFolder = (
-	track: Track,
-	settings: Settings,
-	singleTrack: boolean
-) => {
-	return (
-		track.album?.discTotal > 1 &&
-		settings.createAlbumFolder &&
-		settings.createCDFolder &&
-		(!singleTrack || (singleTrack && settings.createSingleFolder)) &&
-		(!track.playlist ||
-			(track.playlist && settings.tags.savePlaylistAsCompilation) ||
-			(track.playlist && settings.createStructurePlaylist))
-	);
-};
+// Fixed filename templates for single, album and playlist tracks
+const TRACK_FILENAME_TEMPLATE = "%artist% - %title%";
+// Numbered continuously across all discs of an album
+const ALBUM_TRACK_FILENAME_TEMPLATE = "%position%. %title%";
+const PLAYLIST_TRACK_FILENAME_TEMPLATE = "%artist% - %title%";
 
 export function generatePath(
 	track: DeezerTrack,
 	downloadObjectType: DownloadObject["type"],
 	settings: Settings
 ) {
-	let filenameTemplate = "%artist% - %title%";
+	let filenameTemplate = TRACK_FILENAME_TEMPLATE;
 	let singleTrack = false;
 	if (downloadObjectType === "track") {
-		filenameTemplate = settings.createSingleFolder
-			? settings.albumTracknameTemplate
-			: settings.tracknameTemplate;
+		filenameTemplate = TRACK_FILENAME_TEMPLATE;
 		singleTrack = true;
 	} else if (downloadObjectType === "album") {
-		filenameTemplate = settings.albumTracknameTemplate;
+		filenameTemplate = ALBUM_TRACK_FILENAME_TEMPLATE;
 	} else {
-		filenameTemplate = settings.playlistTracknameTemplate;
+		filenameTemplate = PLAYLIST_TRACK_FILENAME_TEMPLATE;
 	}
 
 	let filename = generateTrackName(filenameTemplate, track, settings);
@@ -140,17 +112,17 @@ export function generatePath(
 	let filepath = settings.downloadLocation || ".";
 	let artistPath: string, coverPath: string, extrasPath: string;
 
-	if (shouldCreatePlaylistFolder(track, settings)) {
+	if (shouldCreatePlaylistFolder(track)) {
 		filepath += `/${generatePlaylistName(track, settings)}`;
 	}
 
-	if (track.playlist && !settings.tags.savePlaylistAsCompilation) {
+	if (track.playlist) {
 		extrasPath = filepath;
 	}
 
-	if (shouldCreateArtistFolder(track, settings)) {
+	if (shouldCreateArtistFolder(track)) {
 		filepath += `/${generateArtistName(
-			settings.artistNameTemplate,
+			ARTIST_FOLDER_TEMPLATE,
 			track.album.mainArtist,
 			settings,
 			track.album.rootArtist
@@ -158,9 +130,9 @@ export function generatePath(
 		artistPath = filepath;
 	}
 
-	if (shouldCreateAlbumFolder(track, settings, singleTrack)) {
+	if (shouldCreateAlbumFolder(track, singleTrack)) {
 		filepath += `/${generateAlbumName(
-			settings.albumNameTemplate,
+			ALBUM_FOLDER_TEMPLATE,
 			track.album,
 			settings,
 			track.playlist
@@ -169,10 +141,6 @@ export function generatePath(
 	}
 
 	if (!extrasPath) extrasPath = filepath;
-
-	if (shouldCreateCDFolder(track, settings, singleTrack)) {
-		filepath += `/CD${track.discNumber}`;
-	}
 
 	// Remove Subfolders from filename and add it to filepath
 	if (filename.includes("/")) {
@@ -284,7 +252,11 @@ export function generateTrackName(
 		if (track.album) {
 			filename = filename.replaceAll(
 				"%position%",
-				pad(track.trackNumber, track.album.trackTotal, settings)
+				pad(
+					track.position ?? track.trackNumber,
+					track.album.trackTotal,
+					settings
+				)
 			);
 		}
 	}
@@ -300,18 +272,10 @@ export function generateAlbumName(
 	playlist
 ) {
 	const c = settings.illegalCharacterReplacer;
-	if (playlist && settings.tags.savePlaylistAsCompilation) {
-		foldername = foldername.replaceAll(
-			"%album_id%",
-			"pl_" + playlist.playlistID
-		);
-		foldername = foldername.replaceAll("%genre%", "Compile");
-	} else {
-		foldername = foldername.replaceAll("%album_id%", album.id);
-		if (album.genre.length)
-			foldername = foldername.replaceAll("%genre%", fixName(album.genre[0], c));
-		else foldername = foldername.replaceAll("%genre%", "Unknown");
-	}
+	foldername = foldername.replaceAll("%album_id%", album.id);
+	if (album.genre.length)
+		foldername = foldername.replaceAll("%genre%", fixName(album.genre[0], c));
+	else foldername = foldername.replaceAll("%genre%", "Unknown");
 	foldername = foldername.replaceAll("%album%", fixName(album.title, c));
 	foldername = foldername.replaceAll(
 		"%artist%",
@@ -397,7 +361,7 @@ export function generateArtistName(
 
 export function generatePlaylistName(
 	{ playlist }: Track,
-	{ illegalCharacterReplacer, playlistNameTemplate, dateFormat }: Settings
+	{ illegalCharacterReplacer, dateFormat }: Settings
 ) {
 	const c = illegalCharacterReplacer;
 	const today = new Date();
@@ -407,7 +371,7 @@ export function generatePlaylistName(
 		String(today.getFullYear())
 	);
 
-	let foldername = playlistNameTemplate;
+	let foldername = PLAYLIST_FOLDER_TEMPLATE;
 
 	foldername = foldername.replaceAll("%playlist%", fixName(playlist.title, c));
 	foldername = foldername.replaceAll(

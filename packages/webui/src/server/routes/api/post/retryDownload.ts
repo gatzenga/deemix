@@ -12,21 +12,12 @@ const handler: ApiHandler["handler"] = async (req, res) => {
 
 	const uuid = req.body.uuid;
 	const data = uuid.split("_");
-	let url = "";
-	let bitrate = 0;
-	if (data.length === 4) {
-		if (data[0] === "spotify") {
-			url = `https://open.spotify.com/${data[1]}/${data[2]}`;
-			bitrate = Number(data[3]);
-		}
-	} else {
-		if (data[0] === "playlist" && data[1].endsWith("_top_track")) {
-			data[0] = "artist";
-			data[1] = data[1].replace("_top_track", "/top_track");
-		}
-		url = `https://www.deezer.com/${data[0]}/${data[1]}`;
-		bitrate = Number(data[2]);
+	if (data[0] === "playlist" && data[1].endsWith("_top_track")) {
+		data[0] = "artist";
+		data[1] = data[1].replace("_top_track", "/top_track");
 	}
+	const url = `https://www.deezer.com/${data[0]}/${data[1]}`;
+	const bitrate = Number(data[2]);
 	let obj: any;
 
 	try {

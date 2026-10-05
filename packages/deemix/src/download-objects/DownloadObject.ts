@@ -1,7 +1,7 @@
 import type { Listener } from "@/types/listener.js";
 
 export class DownloadObject {
-	type: "track" | "album" | "playlist" | "artist" | "spotify_playlist";
+	type: "track" | "album" | "playlist" | "artist";
 	id: number | string;
 	bitrate: number;
 	title: string;
@@ -18,7 +18,7 @@ export class DownloadObject {
 	progressNext: number;
 	uuid: string;
 	isCanceled: boolean;
-	__type__: "Single" | "Collection" | "Convertable";
+	__type__: "Single" | "Collection";
 
 	constructor(obj) {
 		this.type = obj.type;
@@ -64,12 +64,7 @@ export class DownloadObject {
 
 	getSlimmedDict() {
 		const light = this.toDict();
-		const propertiesToDelete = [
-			"single",
-			"collection",
-			"plugin",
-			"conversion_data",
-		];
+		const propertiesToDelete = ["single", "collection"];
 		propertiesToDelete.forEach((property) => {
 			if (Object.keys(light).includes(property)) {
 				delete light[property];

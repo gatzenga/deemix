@@ -31,7 +31,6 @@ interface Props {
 		artists: string[];
 		explicit: boolean;
 	};
-	showTags: boolean;
 }
 const { queueItem } = defineProps<Props>();
 const emit = defineEmits(["retry-download", "remove-item", "show-errors"]);
@@ -129,8 +128,6 @@ const generateLink = computed(() => {
 					-10
 				)}/top_track`;
 			return `https://deezer.com/playlist/${queueItem.id}`;
-		case "spotify_playlist":
-			return `https://open.spotify.com/playlist/${queueItem.id}`;
 		default:
 			return "";
 	}
@@ -181,7 +178,7 @@ function onResultIconClick() {
 					:src="queueItem.cover"
 					:alt="`Cover ${queueItem.title}`"
 				/>
-				<span v-if="showTags" class="tag">{{ bitrateText }}</span>
+				<span class="tag">{{ bitrateText }}</span>
 			</div>
 
 			<div class="download-info-data">
@@ -191,7 +188,6 @@ function onResultIconClick() {
 					>
 					{{ queueItem.title }}
 				</span>
-				<span class="download-slim-separator"> - </span>
 				<span>{{ queueItem.artist }}</span>
 			</div>
 
@@ -260,9 +256,6 @@ function onResultIconClick() {
 .download-object .download-info .download-line .explicit-icon {
 	vertical-align: bottom;
 }
-.download-object .download-info .download-slim-separator {
-	display: none;
-}
 .download-object .download-info-data {
 	flex: 1 50%;
 	margin-left: 8px;
@@ -285,7 +278,17 @@ function onResultIconClick() {
 	margin: 0;
 }
 
-#download_list:not(.slim) .download-line {
+#download_list .download-line {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.progress {
+	margin: 0;
+}
+
+#download_list .download-line {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
